@@ -5,27 +5,40 @@ library(ggdag)
 library(ggplot2)
 
 # Source helper functions -----
-source("helpers.R")
+# source("helpers.R")
 
 # User interface ----
 ui <- fluidPage(
 		titlePanel("rGFA Test"),
-		
-		sidebarLayout(
+	
 				sidebarPanel(
 						# Input: Select a file ----
-						fileInput("rgfaFile", "Choose rGFA File",
-								multiple = FALSE,
-								accept = c("text/plain",
-										".txt")),
+						fileInput(
+						  "rgfaFile","rGFA data input",multiple=FALSE, buttonLabel="Browse",placeholder="No file selected",
+						  accept = c("text/plain",".txt")),
+						fileInput(
+						  "GAF_input2","GAF data input",multiple=FALSE, buttonLabel="Browse",placeholder="No file selected"
+						),
+						fileInput(
+						  "Annotation_Input","Add Annotation",multiple=FALSE, buttonLabel="Browse",placeholder="No file selected"
+						),
+						#Not so sure about this part yet
+						selectInput(
+						  "select_graph","Graph",selected = NULL, multiple = FALSE,list("outputfile1","outputfile2")),
+						
+						downloadButton("Fasta_download", "FASTA file Download",icon = shiny::icon("download")),
+						downloadButton("BED_download", "BED file Download",icon = shiny::icon("download"))
 						),
 				
 				mainPanel(
-					tableOutput("contents"),
-					plotOutput("ggdag")
+				  "Graph Visualization Window",
+				  plotOutput(
+				    "ggdag","Graph Visualization Window",width="100%",height="400px",brush=brushOpts(id="plot_brush")
+				  ),
+				  "Linear Visualization Window",
+				  tableOutput("contents"),
 				)
 		)
-)
 
 # Server logic ----
 server <- function(input, output) {
