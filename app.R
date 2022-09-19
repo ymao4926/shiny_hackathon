@@ -1,82 +1,73 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
+# Load packages ----
 library(shiny)
+library(dagitty)
+library(ggdag)
+library(ggplot2)
 
+# Source helper functions -----
+source("helpers.R")
+
+# User interface ----
 ui <- fluidPage(
-  # selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
-  # verbatimTextOutput("summary"),
-  # tableOutput("table")
-  textInput("name", "What's your name?"),
-  textOutput("greeting")
+		titlePanel("rGFA Test"),
+		
+		sidebarLayout(
+				sidebarPanel(
+						# Input: Select a file ----
+						fileInput("rgfaFile", "Choose rGFA File",
+								multiple = FALSE,
+								accept = c("text/plain",
+										".txt")),
+						),
+				
+				mainPanel(
+					tableOutput("contents"),
+					plotOutput("ggdag")
+				)
+		)
 )
 
-server <- function(input, output, session) {
-  # Create a reactive expression
-  dataset <- reactive({
-    get(input$dataset, "package:datasets")
-  })
-  
-  output$summary <- renderPrint({
-    # Use a reactive expression by calling it like a function
-    summary(dataset())
-  })
-  
-  output$greeting <- renderText({
-    paste0("Hello ", input$name)
-  })
-  
-  output$table <- renderTable({
-    dataset()
-  })
+# Server logic ----
+server <- function(input, output) {
+	
+	# Read the rGFA file
+	output$contents <- renderTable({
+		req(input$rgfaFile)
+		
+		df <- read.csv(input$rgfaFile$datapath,
+				header = FALSE,
+				sep = "\t",
+				quote = "")
+		
+		return(df)
+	})
+
+	# Plot the graph
+	output$ggdag <- renderPlot({
+		req(input$rgfaFile)
+		req(input$rgfaFile)
+		
+		df <- read.csv(input$rgfaFile$datapath,
+				header = FALSE,
+				sep = "\t",
+				quote = "")
+		
+		nodes <- subset(df, V1=="S")
+		lines <- subset(df, V1=="L")
+		
+		connections <- vector(mode = "list")
+		for (row in 1:nrow(lines)) {
+			startNode <- lines[row, 2]
+			endNode <- lines[row, 4]
+			connection <- as.formula(paste(startNode, endNode, sep = " ~ "))
+			connections <- append(connections, connection)
+		}
+		
+		dagified <- do.call(dagify, connections)
+		tidy_dagitty(dagified)
+		ggdag(dagified, layout = "circle")
+	})
 }
-
-
+	
+# Run app ----
 shinyApp(ui, server)
-
-# Define UI for application that draws a histogram
-# ui <- fluidPage(
-# 
-#     # Application title
-#     titlePanel("Old Faithful Geyser Data"),
-# 
-#     # Sidebar with a slider input for number of bins 
-#     sidebarLayout(
-#         sidebarPanel(
-#             sliderInput("bins",
-#                         "Number of bins:",
-#                         min = 1,
-#                         max = 50,
-#                         value = 30)
-#         ),
-# 
-#         # Show a plot of the generated distribution
-#         mainPanel(
-#            plotOutput("distPlot")
-#         )
-#     )
-# )
-# 
-# # Define server logic required to draw a histogram
-# server <- function(input, output) {
-# 
-#     output$distPlot <- renderPlot({
-#         # generate bins based on input$bins from ui.R
-#         x    <- faithful[, 2]
-#         bins <- seq(min(x), max(x), length.out = input$bins + 1)
-# 
-#         # draw the histogram with the specified number of bins
-#         hist(x, breaks = bins, col = 'darkgray', border = 'white',
-#              xlab = 'Waiting time to next eruption (in mins)',
-#              main = 'Histogram of waiting times')
-#     })
-# }
-# 
-# # Run the application 
-# shinyApp(ui = ui, server = server)
