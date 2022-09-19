@@ -1,11 +1,23 @@
+# Load packages ----
+library(ggdag)
+library(ggplot2)
+library(shiny)
+library(dagitty)
+library(gggenes)
+
+
+# Source helper functions -----
+source("helpers.R")
+
 if (interactive()) {
   options(device.ask.default = FALSE)
 shinyApp(
   ui = fluidPage(
     sidebarPanel(
+      titlePanel("GFA Visualization"),
             fileInput(
-            "GFA_input","GFA data input",multiple=FALSE, buttonLabel="Browse",placeholder="No file selected"
-            ),
+            "rgfaFile","rGFA data input",multiple=FALSE, buttonLabel="Browse",placeholder="No file selected",
+            accept = c("text/plain",".txt")),
             fileInput(
               "GAF_input2","GAF data input",multiple=FALSE, buttonLabel="Browse",placeholder="No file selected"
             ),
@@ -22,16 +34,54 @@ shinyApp(
     mainPanel(
       "Graph Visualization Window",
       plotOutput(
-      "visualization","Graph Visualization Window",width="100%",height="400px",brush=brushOpts(id="plot_brush")
+      "ggdag","Graph Visualization Window",width="100%",height="400px",brush=brushOpts(id="plot_brush")
       ),
       "Linear Visualization Window",
-      plotOutput(
-        "visualization",width="100%",height="400px",brush=brushOpts(id="plot_brush")
-      )
+#      plotOutput(
+#        "visualization",width="100%",height="400px",brush=brushOpts(id="plot_brush")
+#      ),
+      tableOutput("contents"),
+      
     )),
     
-  server = function(input, output,session) {
-
+  server = function(input, output) {
+    # Read the rGFA file
+    output$contents <- renderTable({
+      req(input$rgfaFile)
+      
+      df <- read.csv(input$rgfaFile$datapath,
+                     header = FALSE,
+                     sep = "\t",
+                     quote = "")
+      
+      return(df)
+    })
+    
+    # Plot the graph
+    output$ggdag <- renderPlot({
+      req(input$rgfaFile)
+      req(input$rgfaFile)
+      
+      df <- read.csv(input$rgfaFile$datapath,
+                     header = FALSE,
+                     sep = "\t",
+                     quote = "")
+      
+      nodes <- subset(df, V1=="S")
+      lines <- subset(df, V1=="L")
+      
+      connections <- vector(mode = "list")
+      for (row in 1:nrow(lines)) {
+        startNode <- lines[row, 2]
+        endNode <- lines[row, 4]
+        connection <- as.formula(paste(startNode, endNode, sep = " ~ "))
+        connections <- append(connections, connection)
+      }
+      
+      dagified <- do.call(dagify, connections)
+      tidy_dagitty(dagified)
+      ggdag(dagified, layout = "circle")
+    })
   }
-
-  )}
+)
+}
