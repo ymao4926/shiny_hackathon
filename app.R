@@ -143,7 +143,7 @@ server <- function(input, output) {
 	  
 	  node.plt + 
 	    geom_bezier(data=arcs.df, aes(x = x, y = y, group=group), arrow = arrow(length = unit(0.01, "npc")), inherit.aes = FALSE)
-
+	  })
 					  
 	  ## Linear visualization
 	  output$bed_plots <- renderPlot({
@@ -180,8 +180,7 @@ server <- function(input, output) {
 			  "brush: ", xy_range_str(input$plot_brush)
 		  )
 	  })
-	})
 }
-	
+
 # Run app ----
 shinyApp(ui, server)
