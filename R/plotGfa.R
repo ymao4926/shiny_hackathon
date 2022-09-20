@@ -26,7 +26,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   links <- links[links$from %in% segments$segment.id & links$to %in% segments$segment.id,]
   
   ## Define segment spacer as fraction of the total lenght of all segments
-  spacer.width <- sum(segments$LN) * 0.05
+  spacer <- sum(segments$LN) * spacer.width
   
   ## Order segments ##
   if (order.by == 'offset') {
@@ -37,7 +37,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   segms.gr <- GenomicRanges::GRanges(seqnames = 'nodes', 
                                      ranges = IRanges::IRanges(start = 1, end = segments$LN), id = segments$segment.id, rank=segments$SR)
   shifts <- GenomicRanges::width(segms.gr)
-  shifts <- cumsum(shifts + spacer.width)
+  shifts <- cumsum(shifts + spacer)
   segms.gr[-1] <- GenomicRanges::shift(segms.gr[-1], shift = shifts[-length(shifts)])
   
   ## Prepare data for plotting ##
@@ -61,8 +61,11 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   x.coords <- c(rbind(segms.df$end[match(links$from, segms.df$id)], segms.df$start[match(links$to, segms.df$id)]))
   y.coords <- c(rbind(segms.df$rank[match(links$from, segms.df$id)], segms.df$rank[match(links$to, segms.df$id)]))
   
-  from <- as.numeric(gsub(links$from, pattern = 's', replacement = ''))
-  to <- as.numeric(gsub(links$to, pattern = 's', replacement = ''))
+  #from <- as.numeric(gsub(links$from, pattern = 's', replacement = ''))
+  #to <- as.numeric(gsub(links$to, pattern = 's', replacement = ''))
+  ## Impose arc height based on the segment order
+  from <- match(links$from, segms.df$id)
+  to <- match(links$to, segms.df$id)
   arc.height <- ( to - from ) - 1
   if (layout == 'linear') {
     arcs.df <- data.frame(x=rep(x.coords, each=2),
@@ -78,7 +81,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   if (layout == 'linear') {
     if (shape == 'rectangle') {
       segms.plt <- ggplot() +
-        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=-0.4, ymax=0.4), colour = 'deepskyblue2', fill = 'deepskyblue2')
+        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=-0.4, ymax=0.4), size=2, colour = 'deepskyblue2', fill = 'deepskyblue2')
         #geom_text(data=segms.df, aes(x=midpoint, y=0.5, label=id), color='red')
     } else if (shape == 'roundrect') {
       segms.plt <- ggplot(nodes.df, aes(x = x, y = 0, group=group)) +
@@ -87,7 +90,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   } else if (layout == 'offset') {
     if (shape == 'rectangle') {
       segms.plt <- ggplot() +
-        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=rank-0.4, ymax=rank + 0.4), colour = 'deepskyblue2', fill = 'deepskyblue2')
+        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=rank-0.4, ymax=rank + 0.4), size=2, colour = 'deepskyblue2', fill = 'deepskyblue2')
       #geom_text(data=segms.df, aes(x=midpoint, y=0.5, label=id), color='red')
     } else if (shape == 'roundrect') {
       segms.plt <- ggplot(nodes.df, aes(x = x, y = rank, group=group)) +
