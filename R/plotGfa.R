@@ -1,4 +1,3 @@
-
 #' Plot GFA from loaded data table
 #' 
 #' This function takes an output from readGfa.R function and makes a graph plot (Adjust annotation!!!)
@@ -13,7 +12,7 @@
 #' @importFrom IRanges IRanges
 #' @importFrom S4Vectors lapply
 #' @importFrom ggforce geom_bezier
-#' @author David Porubsky
+#' @author David Porubsky, Sean McGee & Karynne Patterson
 #' @export
 #' 
 plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order.by='offset', layout='linear', shape='rectangle') {
@@ -51,6 +50,14 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   segms.df$midpoint <- segms.df$start + ((segms.df$end - segms.df$start) / 2)
   
   ## Define links ##
+  #link.start <- segms.df$end[match(links$from, segms.df$id)]
+  #link.end <- segms.df$start[match(links$to, segms.df$id)]
+  link.start <- ifelse(links$from.orient == '+', 
+                       segms.df$end[match(links$from, segms.df$id)], 
+                       segms.df$start[match(links$from, segms.df$id)])
+  link.end <- ifelse(links$to.orient == '+', 
+                     segms.df$start[match(links$to, segms.df$id)],
+                     segms.df$end[match(links$to, segms.df$id)])
   x.coords <- c(rbind(segms.df$end[match(links$from, segms.df$id)], segms.df$start[match(links$to, segms.df$id)]))
   y.coords <- c(rbind(segms.df$rank[match(links$from, segms.df$id)], segms.df$rank[match(links$to, segms.df$id)]))
   
@@ -63,7 +70,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
                           group=rep(1:nrow(links), each=4))
   } else if (layout == 'offset') {
     arcs.df <- data.frame(x=rep(x.coords, each=2),
-                          y=c(rbind(segms.df$rank[links$from], arc.height, arc.height, segms.df$rank[links$to])),
+                          y=c(rbind(y.coords[c(TRUE, FALSE)], arc.height, arc.height, y.coords[c(FALSE, TRUE)])),
                           group=rep(1:nrow(links), each=4))
   }  
   
@@ -71,7 +78,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   if (layout == 'linear') {
     if (shape == 'rectangle') {
       segms.plt <- ggplot() +
-        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=-0.4, ymax=0.4), colour = 'black', fill = 'black')
+        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=-0.4, ymax=0.4), colour = 'deepskyblue2', fill = 'deepskyblue2')
         #geom_text(data=segms.df, aes(x=midpoint, y=0.5, label=id), color='red')
     } else if (shape == 'roundrect') {
       segms.plt <- ggplot(nodes.df, aes(x = x, y = 0, group=group)) +
@@ -80,7 +87,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   } else if (layout == 'offset') {
     if (shape == 'rectangle') {
       segms.plt <- ggplot() +
-        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=rank-0.4, ymax=rank + 0.4), colour = 'black', fill = 'black')
+        geom_rect(data=segms.df, aes(xmin=start, xmax=end, ymin=rank-0.4, ymax=rank + 0.4), colour = 'deepskyblue2', fill = 'deepskyblue2')
       #geom_text(data=segms.df, aes(x=midpoint, y=0.5, label=id), color='red')
     } else if (shape == 'roundrect') {
       segms.plt <- ggplot(nodes.df, aes(x = x, y = rank, group=group)) +
@@ -90,7 +97,17 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   
   ## Visualize links ##
   final.plt <- segms.plt + 
-    ggforce::geom_bezier(data=arcs.df, aes(x = x, y = y, group=group), arrow = arrow(length = unit(0.01, "npc")), inherit.aes = FALSE)
+    ggforce::geom_bezier(data=arcs.df, aes(x = x, y = y, group=group), arrow = arrow(length = unit(0.01, "npc")), inherit.aes = FALSE) +
+    scale_x_continuous(labels = scales::comma)
+  ## Apply theme
+  graph.theme <- theme(axis.title.y=element_blank(),
+                       axis.text.y=element_blank(),
+                       axis.ticks.y=element_blank(),
+                       axis.title.x=element_blank(),
+                       panel.grid.major = element_blank(), 
+                       panel.grid.minor = element_blank(),
+                       panel.background = element_blank())
+  final.plt <- final.plt + graph.theme
   
   ## Return final plotting object
   return(final.plt)
