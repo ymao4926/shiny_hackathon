@@ -105,7 +105,6 @@ server <- function(input, output) {
 	  req(input$rgfaFile)
 	  df <- readGfa(gfa.file = input$rgfaFile$datapath, 
 	                store.fasta = 'FALSE')
-	  browser()
 	  segms.gr <- GRanges(seqnames = 'nodes', ranges = IRanges(start = 1, end = df$segments$LN), id= df$segments$segment.id)
 	  shifts <- width(segms.gr)
 	  shifts <- cumsum(shifts + spacer.width())
