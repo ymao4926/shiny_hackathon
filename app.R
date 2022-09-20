@@ -3,8 +3,6 @@ library(shiny)
 library(ggplot2)
 library(ggforce)
 library(GenomicRanges)
-library(ggdag)
-library(dagitty)
 library(gggenes)
 library(tidyverse)
 library(readr)
@@ -12,6 +10,7 @@ library(readr)
 
 # Source helper functions -----
 # source("helpers.R")
+loadSupport()
 
 # User interface ----
 ui <- fluidPage(
@@ -85,8 +84,8 @@ ui <- fluidPage(
 					        ## Ouput of user graphical interactive information
 					        verbatimTextOutput("info"),
 					        tableOutput("contents"),
-					)),
 					)
+		)
 
 # Server logic ----
 server <- function(input, output) {
@@ -106,6 +105,7 @@ server <- function(input, output) {
 	  req(input$rgfaFile)
 	  df <- readGfa(gfa.file = input$rgfaFile$datapath, 
 	                store.fasta = 'FALSE')
+	  browser()
 	  segms.gr <- GRanges(seqnames = 'nodes', ranges = IRanges(start = 1, end = df$segments$LN), id= df$segments$segment.id)
 	  shifts <- width(segms.gr)
 	  shifts <- cumsum(shifts + spacer.width())
@@ -181,27 +181,6 @@ server <- function(input, output) {
 			  "brush: ", xy_range_str(input$plot_brush)
 		  )
 	  })
-	#   df <- read.csv(input$rgfaFile$datapath,
-	# 			header = FALSE,
-	# 			sep = "\t",
-	# 			quote = "")
-	# 	
-	# 	nodes <- subset(df, V1=="S")
-	# 	lines <- subset(df, V1=="L")
-	# 	
-	# 	connections <- vector(mode = "list")
-	# 	for (row in 1:nrow(lines)) {
-	# 		startNode <- lines[row, 2]
-	# 		endNode <- lines[row, 4]
-	# 		connection <- as.formula(paste(startNode, endNode, sep = " ~ "))
-	# 		connections <- append(connections, connection)
-	# 	}
-	# 	
-	# 	# browser()
-	# 	
-	# 	dagified <- do.call(dagify, connections)
-	# 	tidy_dagitty(dagified)
-	# 	ggdag(dagified, layout = "circle")
 	})
 }
 	
