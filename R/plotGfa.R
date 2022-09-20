@@ -1,4 +1,3 @@
-
 #' Plot GFA from loaded data table
 #' 
 #' This function takes an output from readGfa.R function and makes a graph plot (Adjust annotation!!!)
