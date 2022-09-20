@@ -1,8 +1,9 @@
-#' Plot GAF from loaded data table
+
+#' Plot GFA from loaded data table
 #' 
 #' This function takes an output from readGfa.R function and makes a graph plot (Adjust annotation!!!)
 #'
-#' @param gfa.tbl A path to a GAF file containing sequence graph.
+#' @param gfa.tbl A path to a GFA file containing sequence graph.
 #' @param min.segment.length A minimum size of segment to be plotted.
 #' @param spacer.width User defined fraction to the total segment length to be used as node spacer.
 #' @param order.by Define a column to be used for node ordering. [TODO]
