@@ -102,11 +102,6 @@ ui <- fluidPage(
 # Server logic ----
 server <- function(input, output) {
 	# Read the rGFA file
-	output$graph_point <- renderTable({
-		req(input$graph_click)
-	  nearPoints(df$segments, input$plot_click, xvar = "x", yvar = "rank")
-	})
-	
 	ranges <- reactiveValues(x = NULL, y = NULL)
 	
 	observeEvent(input$graph_dblclick, {
@@ -117,25 +112,30 @@ server <- function(input, output) {
 	    ranges$x <- NULL
 	  }
 	})
+	graph_df <- reactive({
+	  readGfa(gfa.file = input$rgfaFile$datapath, 
+	          store.fasta = 'FALSE')
+	})
 	# Plot the graph
 	output$ggdag <- renderPlot({
 	  # Wait for rgfa input
 	  req(input$rgfaFile)
-	  # Process GFA
-	  df <- readGfa(gfa.file = input$rgfaFile$datapath, 
-	                store.fasta = 'FALSE')
 	  # Plot df and add cartesian 
-	  plotGfa(gfa.tbl=df) + coord_cartesian(xlim = ranges$x, ylim = NULL, expand = FALSE)
-	  	  })
+	  plotGfa(gfa.tbl=graph_df()) + coord_cartesian(xlim = ranges$x, ylim = NULL, expand = FALSE)
+	 })
+  output$graph_point <- renderTable({
+    req(input$graph_click)
+    brushedPoints(graph_df()$segments, input$graph_brush, xvar = "SO", yvar = "SR")
+  })
 	  ## Linear visualization
-	  output$bed_plots <- renderPlot({
-		  req(input$bed)
-		  bed_df <- read_tsv(input$bed$datapath, col_names = T )
-		  colnames(bed_df) <- c("contig","start","stop","name",".","strand","..","...","rgb")
-		  rgb_to_hex <- function(rgb_comm){
-			  rgb_comm = strsplit(split = ",", x = rgb_comm) %>% unlist()
-			  return(rgb(red = rgb_comm[1], green = rgb_comm[2], blue = rgb_comm[3], maxColorValue = 255))
-		  	  }
+	output$bed_plots <- renderPlot({
+	  req(input$bed)
+	  bed_df <- read_tsv(input$bed$datapath, col_names = T )
+	  colnames(bed_df) <- c("contig","start","stop","name",".","strand","..","...","rgb")
+		rgb_to_hex <- function(rgb_comm){
+		rgb_comm = strsplit(split = ",", x = rgb_comm) %>% unlist()
+		return(rgb(red = rgb_comm[1], green = rgb_comm[2], blue = rgb_comm[3], maxColorValue = 255))
+	}
 		  bed_df$hex_color<-sapply(bed_df$rgb, FUN = rgb_to_hex)
 		  
 		  ggplot(data = bed_df) + 
