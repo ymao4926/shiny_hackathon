@@ -15,7 +15,7 @@
 #' @author David Porubsky, Sean McGee & Karynne Patterson
 #' @export
 #' 
-plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order.by='offset', layout='linear', shape='rectangle') {
+plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order.by='offset', layout='linear', shape='rectangle', arrow.head = 'closed') {
   ## Check user input ##
   segments <- gfa.tbl$segments
   links <- gfa.tbl$links
@@ -100,7 +100,7 @@ plotGfa <- function(gfa.tbl=NULL, min.segment.length=0, spacer.width=0.05, order
   
   ## Visualize links ##
   final.plt <- segms.plt + 
-    ggforce::geom_bezier(data=arcs.df, aes(x = x, y = y, group=group), arrow = arrow(length = unit(0.01, "npc")), inherit.aes = FALSE) +
+    ggforce::geom_bezier(data=arcs.df, aes(x = x, y = y, group=group), arrow = arrow(type = arrow.head, length = unit(0.01, "npc")), inherit.aes = FALSE) +
     scale_x_continuous(labels = scales::comma)
   ## Apply theme
   graph.theme <- theme(axis.title.y=element_blank(),
